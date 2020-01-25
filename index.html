@@ -1,0 +1,373 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+        <script
+            src="https://code.jquery.com/jquery-3.4.1.min.js"
+            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+            crossorigin="anonymous"></script>
+<style>
+*{
+    margin: 0;
+    padding: 0
+}
+body{
+    overflow: hidden;
+    background-size: 100vw 100vh;
+    cursor:grab;
+}
+#drop-area{
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    z-index: 1000000000;
+}
+.image_wrapper{
+    background: white;
+    height:100vh;
+    position: absolute;
+    left: 0;
+    pointer-events:none;
+    overflow: hidden;
+}
+.image{
+    background-size: auto 100vh;
+    background-position: left center;
+    height:100vh;
+    position: absolute;
+    left: 0;
+    width: 100vw;
+    height: 100%
+}
+.gradient,.triangle{
+    right: 0;
+    position: absolute;
+    width: 100%;
+    height: 100%
+}
+.triangle{
+    background-image: url('triangle-01.png');
+    background-size: 100% 100%;
+    position: absolute;
+    top: 0;
+    z-index: 1000000000000000000000000
+}
+.triangle_w{
+    background-image: url('triangle-02.png');
+    background-size: 100% 100%;
+    position: absolute;
+    top: 0;
+    z-index: 100000
+}
+.triangle_b {
+    background-image: url(triangle-03.png);
+    background-size: 100% 100%;
+    position: absolute;
+    top: 100vh;
+    z-index: 1000000000000000000000000;
+    transform: scale(-1.5);
+    transform-origin: top;
+}
+.image_wrapper_down .triangle_b {
+    transform: scaleY(-1.5) scaleX(1.5) !important;
+}
+.image_wrapper_down .triangle{
+    transform:scaleX(-1);
+}
+.gradient_sm{
+    width: 0.5vh;
+    height: 100%;
+    position: absolute;
+}
+.image_wrapper_up .gradient_sm{
+    opacity: 0;
+    right: 0;
+    transform-origin: right;
+    width: 0.5vh;
+    background: linear-gradient(90deg, #b0b0b0, #c6c6c6 0%);
+}
+.image_wrapper_down .gradient_sm{
+    opacity: 0;
+    left: 0;
+    transform-origin: left;
+    width: 0.5vh;
+    background: linear-gradient(-90deg, #000000, #606060 20%, #888888 75%);
+}
+.gradient_sm{
+    width: 10vw;
+    height: 10vh;
+    background: red;
+    opacity:1;
+}
+.image_wrapper_down .gradient {
+    background: linear-gradient(-90deg, #0000005c, #3c3c3c59,transparent);
+}
+.image_wrapper_up .gradient{
+    opacity: 0.75;
+    background: linear-gradient(90deg, #3030309e 1vh, #00000087),linear-gradient(0deg, #000000, #30303000 20vh);
+}
+.gradient.sm_wrapper{
+    z-index: 1000000000;
+    background: none
+}
+.skew.image_wrapper_up{
+    transform: scaleX(1.5);
+}
+.skew.image_wrapper_down{
+    transform: scaleX(0.5);
+}
+#img{
+    height: 100vh;
+    opacity: 0;
+    position: absolute;
+    pointer-events: none;
+}
+</style>
+</head>
+<body>
+
+<script type="text/javascript">
+$(document).ready(function(){
+    // ************************ Drag and drop ***************** //
+    let dropArea = document.getElementById("drop-area")
+
+    // Prevent default drag behaviors
+    ;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false)   
+        document.body.addEventListener(eventName, preventDefaults, false)
+    })
+
+    // Highlight drop area when item is dragged over it
+    ;['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false)
+    })
+
+    ;['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false)
+    })
+
+    dropArea.addEventListener('drop', handleDrop, false)
+
+    function preventDefaults (e) {
+        e.preventDefault()
+        e.stopPropagation()
+    }
+
+    function highlight(e) {
+        dropArea.classList.add('highlight')
+    }
+
+    function unhighlight(e) {
+        dropArea.classList.remove('active')
+    }
+
+    function handleDrop(e) {
+        var dt = e.dataTransfer
+        var files = dt.files
+
+        handleFiles(files)
+    }
+
+    let uploadProgress = []
+
+    function initializeProgress(numFiles) {
+        uploadProgress = []
+
+        for(let i = numFiles; i > 0; i--) {
+            uploadProgress.push(0)
+        }
+    }
+
+    function updateProgress(fileNumber, percent) {
+        uploadProgress[fileNumber] = percent
+        let total = uploadProgress.reduce((tot, curr) => tot + curr, 0) / uploadProgress.length
+        console.debug('update', fileNumber, percent, total)
+    }
+
+    function handleFiles(files) {
+        files = [...files]
+        initializeProgress(files.length)
+        files.forEach(previewFile)
+    }
+
+    function previewFile(file) {
+        let reader = new FileReader()
+        reader.readAsDataURL(file)
+        reader.onloadend = function() {
+        var image = document.getElementsByClassName('image')
+            for (var i = image.length - 1; i >= 0; i--) {
+                image[i].style.backgroundImage = 'url('+reader.result+')'
+            }
+        document.getElementsByTagName('body')[0].style.backgroundImage = 'url('+reader.result+')'
+        }
+    }
+})
+</script>
+<script type="text/javascript">
+    // imageratio=4/3
+    $(document).ready(function(){
+        append_wrapper()
+        var image_wrapper
+        var image_wrapper_up
+        var image_wrapper_down
+        var up
+        var down
+        var gradient
+        var init_w = window.innerWidth
+        var init_h = window.innerHeight
+        var w = window.innerWidth
+        var h = window.innerHeight
+        if($('#img').outerWidth() < w){
+            $('#img').css({width : '100vw'})
+            $('#img').css({height : 'auto'})
+        }
+        var init_width = $('#img').outerWidth()/init_w * 100
+        var init_height = $('#img').outerHeight()/init_h * 100
+        skew_a = -60*(w/h - init_w/init_h)
+        for (var i = gradient.length - 1; i >= 0; i--) {
+            gradient[i].style.width = (w/image_wrapper.length) + 'px'
+        }
+        for (var i = image_wrapper.length - 1; i >= 0; i--) {
+            image_wrapper[i].style.zIndex = image_wrapper.length-i
+        }
+        for (var i = up.length - 1; i >= 0; i--) {
+            up[i].style.transformOrigin = (100/image_wrapper.length)*(2*i) + '% 0%'
+        }
+        for (var i = down.length - 1; i >= 0; i--) {
+            down[i].style.transformOrigin = (100/image_wrapper.length)*(2*i+2) + '% 0%'
+        }
+        img_size()
+        folding(w,h)
+    $(window).resize(function(){
+        w = window.innerWidth
+        h = window.innerHeight
+        if(w/h < init_w/init_h){
+            folding(w,h)
+            $('.image').css({'background-size': init_width +'% '+init_height +'%'})
+        }else{
+            $('.image').css({'background-size': $('#img').outerWidth() +'px'+ $('#img').outerHeight() +'px'})
+            $('.image').css({'transform':'skew(0deg)'})
+        }
+    });
+    function img_size(){
+        $('.image').css({'background-size': init_width +'% '+init_height +'%'})
+    }
+    function folding(w,h){
+        var c_width = w/image_wrapper.length
+        var c_width_sm 
+        if((1-(((w/init_w)*init_h)/h))*(h/100) < 0.0028*h){
+            c_width_sm = (1-(((w/init_w)*init_h)/h))*(h/100)
+        }else{
+            c_width_sm = 0.0028*h
+        }
+        skew_a = -90*(w/h - init_w/init_h)
+        $('.shadow').css({opacity : (1-(((w/init_w)*init_h)/h))*2})
+        $('.gradient_sm').css({width : c_width_sm*0.8})
+        $('.gradient_sm').css({top : getheight(skew_a,c_width) -  getheight(skew_a,c_width_sm)*2})
+        $('.triangle').css({height : getheight(skew_a,c_width) -  getheight(skew_a,c_width_sm)*2})
+        $('.triangle').css({width : c_width - c_width_sm*2})
+        $('.triangle_w').css({height : getheight(skew_a,c_width)})
+        $('.triangle_w').css({width : c_width})
+        $('.image_wrapper_down .triangle').css({right : c_width_sm*2})
+
+
+        for (var i = gradient.length - 1; i >= 0; i--) {
+            gradient[i].style.width = (w/image_wrapper.length) + 'px'
+        }
+        for (var i = image_wrapper.length - 1; i >= 0; i--) {
+            image_wrapper[i].style.width = (w/image_wrapper.length)*(i+1) + 'px'
+        }
+        for (var i = up.length - 1; i >= 0; i--) {
+            up[i].style.transform = 'skewY('+skew_a+'deg)';
+        }
+        for (var i = down.length - 1; i >= 0; i--) {
+            down[i].style.transform = 'skewY('+(-1*skew_a)+'deg)';
+        }
+        $('.image_wrapper_down .gradient_sm').css({transform:'skewY('+(skew_a)+'deg)'})
+        $('.image_wrapper_up .gradient_sm').css({transform:'skewY('+(-1*skew_a)+'deg)'})
+    }
+    function getheight(degrees,width) {
+      return Math.tan(degrees * Math.PI/180)*width;
+    }
+    function right(id_1,id_2,id_3){
+        $('#image_wrapper_down').removeClass('skew_bigger')
+        $('#image_wrapper_up').removeClass('skew_smaller')
+        $('.image_wrapper').removeClass('skew')
+        addskew_id(id*2)
+        addskew_id(id*2-1)
+        addskew_id(id*2+1)
+        addskew_id(id*2+2)
+        addskew_id(id*2-2)
+        addskew_id(id*2-3)
+    }
+    function addskew_id(id){
+        if( $('#image_wrapper_'+id).length > 0){
+            $('#image_wrapper_'+id).addClass('skew')
+        }
+    }
+    document.onmousemove=function(e) {
+        var hovered = Math.floor(e.clientX/(w/9))
+        // addskew_id(hovered+1)
+    };
+    function append_wrapper(){
+        var wrapper_count = 12
+        for (var i = wrapper_count - 1; i >= 0; i--) {
+            wrapper_count[i]
+            if(i%2 == 0){
+                var downup = 'down'
+            }else{
+                var downup = 'up'
+            }
+        $('body').append('\
+            <div id="image_wrapper_'+i+'" class="image_wrapper image_wrapper_'+downup+'">\
+                <div class="image '+downup+'"></div>\
+                <div class="gradient shadow"></div>\
+                <div class="gradient sm_wrapper"><div class="gradient_sm"></div></div>\
+                <div class="triangle triangle_w"></div>\
+                <div class="triangle triangle_b"></div>\
+                <div class="triangle"></div>\
+            </div>\
+        ');
+        }
+        image_wrapper = document.getElementsByClassName('image_wrapper')
+        image_wrapper_up = document.getElementsByClassName('image_wrapper_up')
+        image_wrapper_down = document.getElementsByClassName('image_wrapper_down')
+        up = document.getElementsByClassName('up')
+        down = document.getElementsByClassName('down')
+        gradient = document.getElementsByClassName('gradient')
+        $('#img').css({backgroundImage : 'url("hm_'+ (Math.floor(Math.random() * 4) + 1) +'.png")'})
+        $('.image').css({backgroundImage : 'url("hm_'+ (Math.floor(Math.random() * 4) + 1) +'.png")'})
+    }
+    dragging()
+    function dragging(){
+        var init_x = 0
+        var moved_x = 0
+        var downed = false
+        $('#drop-area').mousedown(function(event){
+            init_x = event.pageX
+            downed = true
+        });
+        $('#drop-area').mousemove(function(event){
+            if(downed){
+                moved_x = window.innerWidth - Math.abs(event.pageX - init_x)
+                if(event.pageX > init_x){
+                    // move right
+                }else{
+                    // move left
+                }
+                $('.image').css({'width': moved_x})
+                folding(moved_x,h)
+            }
+        });
+        $('#drop-area').mouseup(function(event){
+            downed = false
+            $('.image').css({'width': '100vw'})
+            folding(w,h)
+        });
+    }
+    })
+</script>
+    <div id="drop-area"></div>
+    <img id="img" src ="hm_4.png">
+</body>
+</html>
